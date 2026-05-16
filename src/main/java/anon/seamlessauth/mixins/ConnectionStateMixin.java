@@ -19,7 +19,7 @@ public class ConnectionStateMixin {
     @Inject(
         at = @At("HEAD"),
         method = "func_150752_a(Lnet/minecraft/network/Packet;)Lnet/minecraft/network/EnumConnectionState;",
-        cancellable = true)
+        cancellable = true) // getFromPacket
     private static void func_150752_a(Packet packetIn, CallbackInfoReturnable<EnumConnectionState> ci) {
         if (packetIn instanceof KeyRequest || packetIn instanceof KeyResponse
             || packetIn instanceof ChallengeRequest

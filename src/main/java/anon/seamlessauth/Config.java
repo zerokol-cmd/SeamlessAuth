@@ -13,6 +13,8 @@ public class Config {
     public static String capePath;
 
     public static String databasePath;
+    public static String requiredKeyAlgorithms;
+
     public static boolean implicitRegistration;
 
     public static boolean enableSkinSharing;
@@ -51,6 +53,11 @@ public class Config {
             "cape.png",
             "Path to the image that will be used as this client's cape. An initial ~ expands to the current user's home directory.");
 
+        requiredKeyAlgorithms = configuration.getString(
+            "requiredKeyAlgorithms",
+            "general",
+            "Falcon1024|ML-DSA-44",
+            "Specifies key algorithms required for ");
         databasePath = configuration.getString(
             "databasePath",
             "server",

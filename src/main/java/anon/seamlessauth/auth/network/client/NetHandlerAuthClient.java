@@ -22,25 +22,27 @@ public class NetHandlerAuthClient extends NetHandlerLoginClient implements INetH
 
     @Override
     public void handleKeyRequest(KeyRequest packetIn) {
-        field_147393_d
-            .scheduleOutboundPacket(new KeyResponse(ClientProxy.keyManager.pubKey), new GenericFutureListener[0]);;
+        // We now send the entire map of supported keys (RSA + Post-Quantum)
+        field_147393_d.scheduleOutboundPacket(
+            new KeyResponse(ClientProxy.keyManager.getPublicKeys()),
+            new GenericFutureListener[0]);
     }
 
     @Override
     public void handleChallengeRequest(ChallengeRequest packetIn) {
-        byte[] encryptedChallenge = packetIn.payload;
-        byte[] challenge;
+        byte[] multiPayload = packetIn.payload;
+        byte[] responsePayload;
 
         try {
-            challenge = ClientProxy.keyManager.decrypt(encryptedChallenge);
+            responsePayload = ClientProxy.keyManager.processChallenge(multiPayload);
         } catch (Exception e) {
-            SeamlessAuth.LOG.warn("failed to decrypt challenge", e);
-            field_147393_d.closeChannel(new ChatComponentText("failed to decrypt challenge!"));
+            SeamlessAuth.LOG.warn("failed to process server challenge", e);
+            field_147393_d.closeChannel(new ChatComponentText("failed to process authentication challenge!"));
             return;
         }
 
-        SeamlessAuth.LOG.info("Challenge decrypted, responding to server...");
+        SeamlessAuth.LOG.info("Challenge processed successfully, responding to server...");
 
-        field_147393_d.scheduleOutboundPacket(new ChallengeResponse(challenge), new GenericFutureListener[0]);
+        field_147393_d.scheduleOutboundPacket(new ChallengeResponse(responsePayload), new GenericFutureListener[0]);
     }
 }

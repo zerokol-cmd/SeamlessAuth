@@ -13,6 +13,7 @@ public class ServerProxy extends CommonProxy {
         super.preInit(event);
 
         keyDatabase = new KeyDatabase(Config.expandPath(Config.databasePath));
+        keyDatabase = new KeyDatabase(Config.expandPath(Config.databasePath));
     }
 
     @Override

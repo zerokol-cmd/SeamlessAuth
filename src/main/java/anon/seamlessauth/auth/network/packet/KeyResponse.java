@@ -1,41 +1,65 @@
 package anon.seamlessauth.auth.network.packet;
 
 import java.io.IOException;
-import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
+import java.util.HashMap;
+import java.util.Map;
 
 import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 
+import com.google.common.base.Charsets;
+
+import anon.seamlessauth.auth.BetterPublicKey;
 import anon.seamlessauth.auth.network.server.INetHandlerAuthServer;
-import anon.seamlessauth.util.CryptoInstances;
 
 public class KeyResponse extends Packet {
 
-    public PublicKey key;
+    public Map<String, BetterPublicKey> keys;
 
-    public KeyResponse() {}
+    public KeyResponse() {
+        this.keys = new HashMap<>();
+    }
 
-    public KeyResponse(PublicKey userKey) {
-        key = userKey;
+    public KeyResponse(Map<String, BetterPublicKey> userKeys) {
+        this.keys = userKeys != null ? userKeys : new HashMap<>();
     }
 
     @Override
     public void readPacketData(PacketBuffer data) throws IOException {
-        byte[] blob = readBlob(data);
+        int keyCount = data.readInt();
+        this.keys = new HashMap<>();
 
-        try {
-            key = CryptoInstances.rsaFactory.generatePublic(new X509EncodedKeySpec(blob));
-        } catch (InvalidKeySpecException e) {
-            key = null;
+        for (int i = 0; i < keyCount; i++) {
+            String algorithm = new String(readBlob(data), Charsets.UTF_8);
+
+            byte[] keyBytes = readBlob(data);
+
+            BetterPublicKey key = new BetterPublicKey(algorithm, keyBytes);
+            this.keys.put(algorithm, key);
         }
     }
 
     @Override
     public void writePacketData(PacketBuffer data) throws IOException {
-        writeBlob(data, key.getEncoded());
+        if (this.keys == null || this.keys.isEmpty()) {
+            data.writeInt(0);
+            return;
+        }
+
+        data.writeInt(this.keys.size());
+
+        for (Map.Entry<String, BetterPublicKey> entry : this.keys.entrySet()) {
+            writeBlob(
+                data,
+                entry.getKey()
+                    .getBytes(Charsets.UTF_8));
+
+            writeBlob(
+                data,
+                entry.getValue()
+                    .getEncoded());
+        }
     }
 
     public void processPacket(INetHandlerAuthServer handler) {
