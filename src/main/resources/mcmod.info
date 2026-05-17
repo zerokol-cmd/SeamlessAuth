@@ -3,10 +3,10 @@
 	"modList": [{
 		"modid": "${modId}",
 		"name": "${modName}",
-		"description": "A seamless authentication mod that uses asymmetric encryption.",
+		"description": "Post-quantum authentication for offline-mode servers using OQS signatures, with optional session encryption (AES-256-GCM) and double-ratchet rekey.",
 		"version": "${modVersion}",
 		"mcversion": "${minecraftVersion}",
-		"url": "http://mmcg.anons.party",
+		"url": "",
 		"updateUrl": "",
 		"authorList": ["Anonymous"],
 		"credits": "",
