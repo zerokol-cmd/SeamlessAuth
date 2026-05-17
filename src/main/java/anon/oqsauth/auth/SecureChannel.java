@@ -252,6 +252,64 @@ public final class SecureChannel {
         dst[off + 3] = (byte) value;
     }
 
+    private static int readInt(byte[] src, int off) {
+        return ((src[off] & 0xFF) << 24) | ((src[off + 1] & 0xFF) << 16)
+            | ((src[off + 2] & 0xFF) << 8)
+            | (src[off + 3] & 0xFF);
+    }
+
+    public static byte[] encodeEnvelope(Envelope env) {
+        int kemLen = env.kemCiphertext == null ? 0 : env.kemCiphertext.length;
+        int pubLen = env.newRemotePublic == null ? 0 : env.newRemotePublic.length;
+        boolean ratchet = kemLen > 0 || pubLen > 0;
+        int ctLen = env.ciphertext.length;
+        int total = 1 + (ratchet ? 8 + kemLen + pubLen : 0) + 4 + ctLen;
+        byte[] out = new byte[total];
+        int o = 0;
+        out[o++] = (byte) (ratchet ? 1 : 0);
+        if (ratchet) {
+            writeInt(out, o, kemLen);
+            o += 4;
+            System.arraycopy(env.kemCiphertext, 0, out, o, kemLen);
+            o += kemLen;
+            writeInt(out, o, pubLen);
+            o += 4;
+            System.arraycopy(env.newRemotePublic, 0, out, o, pubLen);
+            o += pubLen;
+        }
+        writeInt(out, o, env.counter);
+        o += 4;
+        System.arraycopy(env.ciphertext, 0, out, o, ctLen);
+        return out;
+    }
+
+    public static Envelope decodeEnvelope(byte[] frame) throws GeneralSecurityException {
+        if (frame.length < 1 + 4) throw new GeneralSecurityException("frame too short");
+        int o = 0;
+        boolean ratchet = frame[o++] != 0;
+        byte[] kemCipher = null;
+        byte[] newPub = null;
+        if (ratchet) {
+            if (frame.length < o + 8) throw new GeneralSecurityException("ratchet header truncated");
+            int kemLen = readInt(frame, o);
+            o += 4;
+            if (kemLen < 0 || kemLen > frame.length - o) throw new GeneralSecurityException("kemLen out of range");
+            kemCipher = Arrays.copyOfRange(frame, o, o + kemLen);
+            o += kemLen;
+            if (frame.length < o + 4) throw new GeneralSecurityException("ratchet pub len truncated");
+            int pubLen = readInt(frame, o);
+            o += 4;
+            if (pubLen < 0 || pubLen > frame.length - o) throw new GeneralSecurityException("pubLen out of range");
+            newPub = Arrays.copyOfRange(frame, o, o + pubLen);
+            o += pubLen;
+        }
+        if (frame.length < o + 4) throw new GeneralSecurityException("counter truncated");
+        int counter = readInt(frame, o);
+        o += 4;
+        byte[] ct = Arrays.copyOfRange(frame, o, frame.length);
+        return new Envelope(kemCipher, newPub, counter, ct);
+    }
+
     public static final class Envelope {
 
         public final byte[] kemCiphertext;

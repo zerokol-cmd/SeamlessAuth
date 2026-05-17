@@ -1,6 +1,10 @@
 package anon.oqsauth;
 
+import net.minecraft.network.NetworkManager;
+
 import anon.oqsauth.auth.KeyDatabase;
+import anon.oqsauth.auth.SecureChannel;
+import anon.oqsauth.net.ServerLoginHandler;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 
@@ -18,5 +22,15 @@ public final class ServerProxy extends CommonProxy {
     @Override
     public void serverStarting(FMLServerStartingEvent event) {
         event.registerServerCommand(new ServerCommand());
+    }
+
+    @Override
+    public SecureChannel findSession(NetworkManager network) {
+        return ServerLoginHandler.SESSIONS.get(network);
+    }
+
+    @Override
+    public void removeSession(NetworkManager network) {
+        ServerLoginHandler.SESSIONS.remove(network);
     }
 }

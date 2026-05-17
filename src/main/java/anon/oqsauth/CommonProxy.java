@@ -1,7 +1,9 @@
 package anon.oqsauth;
 
 import net.minecraft.network.EnumConnectionState;
+import net.minecraft.network.NetworkManager;
 
+import anon.oqsauth.auth.SecureChannel;
 import anon.oqsauth.net.ClientAuthResponse;
 import anon.oqsauth.net.ServerHello;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -24,4 +26,10 @@ public class CommonProxy {
     public void postInit(FMLPostInitializationEvent event) {}
 
     public void serverStarting(FMLServerStartingEvent event) {}
+
+    public SecureChannel findSession(NetworkManager network) {
+        return null;
+    }
+
+    public void removeSession(NetworkManager network) {}
 }
